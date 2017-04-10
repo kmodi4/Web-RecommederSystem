@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    
+         <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Refurbished BookStore</title>
+
+        <!--Font aswesome-->
+        <link rel="stylesheet" href="font-awesome-4.6.3/font-awesome-4.6.3/css/font-awesome.min.css">
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="libs/jquery-ui.min.css"/>
+        <link rel="stylesheet" href="libs/img_style.css"/>
+        <link rel="stylesheet" href="libs/sidebar.css"/>
+        <script src="libs/jquery_min.js"></script>
+         <link rel="stylesheet" href="libs/jquery-ui.theme.min.css"/>
+         <link rel="stylesheet" href="libs/jquery-ui.structure.min.css"/>   
+        
+        <!--boostrap -->
+        <link rel="stylesheet" href="libs/font_robot.css">
+         <link rel="stylesheet" href="libs/bootstrap_min.css">
+          <link rel="stylesheet" href="libs/ngProgress.css">
+
+        
+        <script src="libs/jquery-ui.min.js"></script>       
+         <script src="libs/bootstrap_min.js"></script>
+
+         <script src = "libs/angular_min.js"></script>
+         <script src = "libs/angular_route.js"></script>
+         <script src = "libs/angular_modal.js"></script>
+         <script src = "libs/angular_cookie.js"></script>
+         <script src = "libs/angular_progress.js"></script>
+
+
+  </head>
+ 
+  <body ng-app="myApp">
+ 
+    <div class="container" data-ng-controller="MainCtr">
+        
+      <nav class="navbar navbar-inverse">
+       <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">WebSiteName</a>
+        </div>
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#/">Login</a></li>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#recommend">Recommend</a></li>
+          <li><a href="#about">About</a></li>
+          
+        </ul>
+       </div>
+      </nav>
+
+        
+      <div ng-view></div>
+               
+    </div>
+      
+
+        <!-- start Script -->
+        <script src="js/app.js"></script>
+        <script src="js/Ang-base64.js"></script>
+
+        <script src="js/Directive/Pagination.js"></script>
+        <script src="js/Directive/datepicker.js"></script>
+        <script src="js/Directive/preview_image.js"></script>
+
+        <script src="js/factory/authfact.js"></script>
+        <script src="js/factory/loginfact.js"></script>
+        <script src="js/factory/bookfact.js"></script>
+        <script src="js/factory/idfact.js"></script>
+       
+        <script src="js/factory/complaintfetch.js"></script>
+        <script src="js/factory/compdetailfact.js"></script>
+
+        <script src="js/Controller/bookCtr.js"></script>
+        <script src="js/Controller/loginCtr.js"></script>
+        <script src="js/Controller/homeCtr.js"></script>
+        <script src="js/Controller/addbookCtr.js"></script>
+        <script src="js/Controller/recommendCtr.js"></script>
+        <script src="js/Controller/bookdetailsCtr.js"></script>
+        <!-- End Script -->
+
+     </body>   
+
+</html>

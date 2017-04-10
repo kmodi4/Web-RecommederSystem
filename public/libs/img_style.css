@@ -1,0 +1,33 @@
+.img-responsive {
+  display: inline-block;
+}
+
+.div-inline {
+	display: inline-block;
+	width:150px;
+	height:200px;
+	margin: 8px;
+    border: 2px solid #000000;
+}
+
+.p-caption {
+	white-space: nowrap; 
+    width: 10em; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+    
+}
+
+.panel-group {
+	display: inline-block;
+	width:150px;
+	height:200px;
+	margin: 8px;
+}
+
+.panel-heading {
+	white-space: nowrap; 
+    width: 11em; 
+    overflow: hidden;
+    text-overflow: ellipsis; 
+}

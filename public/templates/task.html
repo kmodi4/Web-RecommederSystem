@@ -1,0 +1,11 @@
+<div>
+	<h3>Tasks Pending</h3>
+	<ul data-ng-repeat="x in res">
+		<li>{{x}}</li>
+	</ul><br><br>
+	<div>
+		<input type="text" placeholder="Enter new Task" data-ng-model="user.task">
+		<button type="button" class="btn btn-primary" data-ng-click="addtask()">add</button>
+	
+	</div>
+</div>

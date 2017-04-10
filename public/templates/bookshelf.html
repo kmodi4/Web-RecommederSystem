@@ -1,0 +1,22 @@
+<div data-ng-show=true class="row" >
+         <a href="#engineerDetail/{{x.engg_ID}}" data-ng-repeat="x in response | filter:searchStr">
+          <div  class="col-sm-3 col-xs-10 " >
+              <div class="card">
+                  <div  class="header-bg" width="250" class="bg-primary">
+                    <img class="blurImg" data-ng-src="{{x.engg_image}}" alt="/img/person-icon.jpg" />
+                  </div>
+                  
+                  <div class="avatar">
+                      <img data-ng-src="{{x.engg_image}}" alt="/img/person-icon.jpg" /> <!--Default Image-->
+                  </div>
+                  <!--Engineer card detail -->
+                  <div class="content">
+                    <h3 style="color:black;">{{x.engg_name}}</h3>
+                    <p style="color:#3f3f3f;font-weight:bold;"> ID-{{x.engg_ID}}</p>
+                    <p style="color:#3f3f3f;font-weight:bold;">{{x.engg_emailID}}</p>    
+                    <p style="color:#3f3f3f;font-weight:bold;">Contact No: {{x.engg_mobile}}</p>    
+                  </div>
+              </div>
+          </div>
+        </a>  
+      </div>

@@ -1,0 +1,144 @@
+ <div class="row justify-content-around">
+     <div class="col-md-4">
+        <div class="text-center">
+          <img style="height:100px;width:100px" class="img-rounded" data-ng-src="{{ user.imgUrl}}" alt="No-Img">
+          <h6>Upload a different photo...</h6>
+          <form name="form">
+           <input  type="file" class="form-control" ng-model="file" name="file" onchange="angular.element(this).scope().photoChanged(this.files)" base-sixty-four-input required onload="onLoad" maxsize="500" accept="image/*">
+           <span ng-show="form.files.$error.maxsize">Files must not exceed 500 KB</span>
+           <br>
+           </form>
+          <!--<table border="1">
+             <tr ng-show="file">
+                <td>{{file.filename}}</td>
+                <td>{{file.filetype}}</td>
+                <td>{{file.filesize / 1000}}</td>
+                <td>{{file.base64.substring(0, 20)}}...</td>
+              </tr>
+          </table>-->
+        </div>
+      </div>
+
+ <div class="col-md-8">
+	<form class="form-horizontal" role="form">
+     
+          <div class="form-group">
+            <label class="col-lg-3 control-label">ISBN:</label>
+            <div class="col-lg-8">
+             <div class="input-group">
+              <input class="form-control" type="text" data-ng-model="user.isbn" maxlength="13" required>
+              <span style="padding:0px 0px 0px 0px !important" class="input-group-addon"><button class="btn" data-ng-click="fetchBookInfo(user.isbn)"><span class="glyphicon glyphicon-search"></span>&nbsp;Search</button></span>
+              </div>
+
+
+<!--
+   <div class="form-horizontal">
+    <input name="search" id="search"/>
+    <button class="btn">button</button>
+</div>
+
+<div class="input-group">
+   <input type="text" class="form-control">
+   <span class="input-group-btn">
+        <button class="btn btn-default" type="button">Go!</button>
+   </span>
+</div>
+-->
+
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="col-lg-3 control-label">Title:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.title" required>
+            </div>
+          </div>
+		      
+          <div class="form-group">
+            <label class="col-lg-3 control-label">Author:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.author" required>
+            </div>
+          </div>
+		      
+          <div class="form-group">
+            <label class="col-lg-3 control-label">Edition:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.edition" required>
+            </div>
+          </div>
+		 
+          <div class="form-group">
+            <label class="col-lg-3 control-label">Condition:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.condition" required>
+            </div>
+          </div>
+		      
+          <div class="form-group">
+            <label class="col-lg-3 control-label">Publisher:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.publisher" required>
+            </div>
+          </div>
+
+		      <div class="form-group">
+            <label class="col-lg-3 control-label">PageCount:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.pages" required>
+            </div>
+          </div>
+		  
+		   <div class="form-group">
+            <label class="col-lg-3 control-label">OriginalPrice:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.originalprice">
+            </div>
+          </div>
+		  
+          <div class="form-group">
+            <label class="col-lg-3 control-label">YourPrice:</label>
+            <div class="col-lg-8">
+              <input class="form-control" type="text" data-ng-model="user.yourprice" required>
+            </div>
+          </div>
+
+         
+
+           <div class="form-group">
+            <label class="col-lg-3 control-label">Discription:</label>
+            <div class="col-lg-8">
+              <textarea rows="3" class="form-control"  type="text" data-ng-model="user.desc" required></textarea>
+            </div>
+          </div>
+
+            
+          <!--<div class="form-group">
+            <label class="col-lg-3 control-label">Category:</label>
+            <div class="col-lg-8">
+              <div class="ui-select">
+                <select id="user_time_zone" class="form-control" data-ng-model="user.genre">
+                  <option value="Education" selected="selected">Education</option>
+                  <option value="Computer">Computer</option>
+                  <option value="History">History</option>
+                  <option value="Science">Science</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Quiz">Quiz</option>
+                </select>
+              </div>
+            </div>
+          </div> -->
+
+          <div class="form-group">
+            <label class="col-md-3 control-label"></label>
+            <div class="col-md-8">
+              <input type="submit" class="btn btn-primary" value="Add" data-ng-click="postData()">
+              <span></span>
+              <input type="reset" class="btn btn-default" value="Cancel">
+            </div>
+          </div>
+
+    </form>
+ </div>
+</div>
