@@ -96,6 +96,42 @@ angular.module('myApp')
                     headers : { 'Content-Type': 'application/json' } 
                      // set the headers so angular passing info as form data (not request payload)
                     });
+                }
+
+                bookfetch.rateBook = function(data){
+                    var parameter = data;
+                     console.log(data);
+                      return  $http({
+                      method  : 'POST',
+                      url     : 'http://'+$rootScope.server+'/api/rateBook', 
+                      data    :  parameter,  // pass in data as strings
+                      headers : { 'Content-Type': 'application/json' } 
+                       // set the headers so angular passing info as form data (not request payload)
+                      });
+                }
+
+                bookfetch.getRating =  function(data){
+                  var parameter = data;
+                     console.log(data);
+                      return  $http({
+                      method  : 'PUT',
+                      url     : 'http://'+$rootScope.server+'/api/getRating', 
+                      data    :  parameter,  // pass in data as strings
+                      headers : { 'Content-Type': 'application/json' } 
+                       // set the headers so angular passing info as form data (not request payload)
+                      });
+                }
+
+                bookfetch.implicit_mf = function(data){
+                  var parameter = data;
+                     
+                      return  $http({
+                      method  : 'PUT',
+                      url     : 'http://'+$rootScope.server+'/api/matrixFactorization', 
+                      data    :  parameter,  // pass in data as strings
+                      headers : { 'Content-Type': 'application/json' } 
+                       // set the headers so angular passing info as form data (not request payload)
+                      });
                 }  
             
             return bookfetch;

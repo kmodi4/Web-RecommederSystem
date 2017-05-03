@@ -4,15 +4,16 @@
 angular.module('myApp')
        .factory('idfact', function($cookieStore){
           var idfact = {};
-             idfact.setid = function(id){
+             idfact.setid = function(id,username){
                   idfact.userid  = id;
-                   $cookieStore.put('cookieUser_ID',id);
+                  idfact.username = username;
+                   $cookieStore.put('cookieUser_ID',idfact);
 
              }
 
              idfact.getid = function(){
-                  idfact.userid = $cookieStore.get('cookieUser_ID');
-             	return idfact.userid;
+                  return $cookieStore.get('cookieUser_ID');
+             	
              }
 
              idfact.setBookid = function(user,isbn,title){

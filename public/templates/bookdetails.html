@@ -1,6 +1,9 @@
 <div class="row">
 	<div class="col-md-3">
 	 <img data-ng-src="{{resp.imgUrl}}" alt="NO IMG" class="img-rounded" width="150" height="200" align="middle" style="margin:0px 0px 0px 35px"><br><br>
+
+	  <div style="margin-left:68px"><span uib-rating ng-model="rate" max="max" read-only="isReadonly" on-hover="hoveringOver(value)" on-leave="overStar = null" titles="['one','two','three']" ng-click="onRating()" aria-labelledby="default-rating"></span></div><br>
+
 	 <table class="table table-condensed">
 			    		    
 			      <tr>
@@ -80,14 +83,22 @@
 <div>
 <h2>Similar Products</h2>
 	<div class="panel-group" data-ng-repeat="x in topN" >
-	      <a data-ng-click="itemclick(x.Username,x.isbn,x.title)">
+	    <a data-ng-click="itemclick(x.Username,x.isbn,x.title)">
 	       <div class="panel panel-default" >
 		     <div class="panel-body" style="height:200px;">
-			 <img data-ng-src="{{x.imgUrl}}" class="img-responsive" alt="Img Not Found" style="width:100%;height:100%;" /></div>
+			 	<img data-ng-src="{{x.imgUrl}}" class="img-responsive" alt="Img Not Found" style="width:100%;height:100%;" /></div>
 		     <div class="panel-heading">Title:{{x.title}}</div>
-		 </div>
-		 </a> 
-		 
-		
-</div>
+		 	</div>
+		 </a> 		
+	</div><br><br>
+<h2>You Might Also Like This</h2>
+	<div class="panel-group" data-ng-repeat="x in implicit_topN" >
+	    <a data-ng-click="itemclick(x.Username,x.isbn,x.title)">
+	       <div class="panel panel-default" >
+		     <div class="panel-body" style="height:200px;">
+			 	<img data-ng-src="{{x.imgUrl}}" class="img-responsive" alt="Img Not Found" style="width:100%;height:100%;" /></div>
+		     <div class="panel-heading">Title:{{x.title}}</div>
+		 	</div>
+		 </a> 		
+	</div>	
 </div>

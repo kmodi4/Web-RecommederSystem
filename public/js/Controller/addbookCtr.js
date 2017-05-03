@@ -18,7 +18,7 @@ angular.module('myApp')
                 $scope.files = [];
                 var uploadedCount = 0;
                 $scope.user.Username = authfact.getUser();;
-                $scope.user.genre = "Other";
+                $scope.user.genre = "other";
                 $scope.result = {};
                  $scope.thumbnail = {
                     dataUrl: 'adsfas'
@@ -140,3 +140,7 @@ angular.module('myApp')
 
 
  })();   
+
+ /*
+
+ */

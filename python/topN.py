@@ -5,11 +5,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.externals import joblib
 import pickle
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
-def loadvector():
-	with open('tfMatrix.pickle', 'rb') as f:
+def fullPath():
+	return os.path.split(os.path.realpath(__file__))[0]
+
+def loadMatrix():
+	with open(fullPath()+'/features/tfMatrix.pickle', 'rb') as f:
 			Y=pickle.load(f)
 	return Y
 
@@ -20,12 +24,13 @@ def readinput():
 
 def main():
 	data = readinput()
-	Y = loadvector()
+	Y = loadMatrix()
 	mytitle = data['Mytitle']
 	AllTitle = data['Alltitles']
 	title_list = []
-	mytitleIndex = 0
+	mytitleIndex = -1
 	i = 0
+	topN = []
 
 	for x in AllTitle:
 		if x['title'] == mytitle:
@@ -33,15 +38,18 @@ def main():
 		title_list.append(x['title'])
 		i = i+1
 
-	
-	new_data = pd.DataFrame(title_list, columns=["title"])
-	cosine = linear_kernel(Y[mytitleIndex], Y)
+	if mytitleIndex < Y.shape[0]:
+		new_data = pd.DataFrame(title_list, columns=["title"])
+		cosine = linear_kernel(Y[mytitleIndex], Y)
 
-	topN = []
-	for x in cosine[0].argsort()[:-5:-1]:
-		topN.append(new_data["title"][x])
-	topN.pop(0)
+		for x in cosine[0].argsort()[::-1][:6]:
+			topN.append(new_data["title"][x])
+		topN.pop(0)
+
 	print (json.dumps(topN))
+
+		
+	
 		
 
 # Start process

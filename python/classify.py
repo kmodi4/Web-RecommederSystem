@@ -15,6 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.externals import joblib
 from sklearn.neighbors import KNeighborsClassifier
 import pickle
+import os
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -23,9 +24,7 @@ def read_in():
     
     for lines in fileinput.input():
         jsondata = lines
-
-    
-   
+ 
     #Since our input would only be having one line, parse our JSON data from that
     return json.loads(jsondata)
 
@@ -43,14 +42,16 @@ def MNLB(Y,results):
     clf = MultinomialNB()
     clf.fit(Y,results)
     #now you can save it to a file
-    with open('clf_Mnlb.pkl', 'wb') as f:
+    Fullpath = os.path.split(os.path.realpath(__file__))[0]
+    with open(Fullpath+'/classifiers/clf_Mnlb.pkl', 'wb') as f:
         pickle.dump(clf, f)
     return clf
     
 def KNN(Y,results):
     clf = KNeighborsClassifier(n_neighbors=3) 
     clf.fit(Y,results)
-    with open('clf_Knn.pkl', 'wb') as f:
+    Fullpath = os.path.split(os.path.realpath(__file__))[0]
+    with open(Fullpath+'/classifiers/clf_Knn.pkl', 'wb') as f:
         pickle.dump(clf, f)
     return clf
 
@@ -59,6 +60,7 @@ def main():
     #get our data as an array from read_in()
     data = read_in()
     title_list = []
+    bookid_list = []
     description_list = []
     genre_list = []
     
@@ -67,39 +69,41 @@ def main():
         title_list.append(x['title'])
         description_list.append(x['desc'])
         genre_list.append(x['genre'])
+        bookid_list.append(x['book_id'])
         
     
-    new_data = pd.DataFrame(title_list, columns=["title"])
+    new_data = pd.DataFrame(bookid_list, columns=["book_id"])
     new_data["description"] = description_list
     new_data["genre"] = genre_list
-    print (len(new_data))
-    #print (new_data)
+    
     extra_word = {"!",":",";","[","]","(",")","{","}",",",".","-","--","&","'","?","@","#","%","$","*","book","books"}
     s_w = text.ENGLISH_STOP_WORDS.union(extra_word)
 
     corpus = new_data["description"]
-    #vectorizer = CountVectorizer(tokenizer=tokenize,min_df=1,stop_words='english',analyzer='word',lowercase=True)
+    
     tfvect = TfidfVectorizer(tokenizer=tokenize,stop_words=s_w,analyzer='word',lowercase=True,strip_accents='unicode',use_idf=False)
-    #X = vectorizer.fit_transform(corpus).toarray()
+    
     Y = tfvect.fit_transform(corpus).toarray()
-    pickle.dump(Y, open("tfMatrix.pickle", "wb"))
-    f1 = open("tfvect.pickle","wb")
+    Fullpath = os.path.split(os.path.realpath(__file__))[0]
+    pickle.dump(Y, open(Fullpath+'/features/tfMatrix.pickle', "wb"))
+    f1 = open(Fullpath+'/features/tfvect.pickle',"wb")
     pickle.dump(tfvect,f1)
     f1.close()
 
-    #print (X.shape)
-    #print (Y.shape)
-    #print (vectorizer.get_feature_names()[150:240])
+    #print (pd.DataFrame(data=Y,index=bookid_list,columns=tfvect.get_feature_names()))
     #print (tfvect.get_feature_names()[150:240])
 
     genre = new_data["genre"].unique()
     genre_dict = {value:index for index, value in enumerate(genre)}
     results = new_data["genre"].map(genre_dict)
 
-    MNLB(Y,results)
-    print ("MLNB model created...")
+    #pickle.dump(genre,open(Fullpath+"/features/genre.pickle", "wb")) 
     KNN(Y,results)
-    print ("KNN model created...")
+    #print ("KNN model created...")
+    print (Y.shape)
+    MNLB(Y,results)
+    #print ("MLNB model created...")
+    
 
     #cosine_similarities = linear_kernel(Y, Y)
     #cosine = cosine_similarity(Y[0], Y)

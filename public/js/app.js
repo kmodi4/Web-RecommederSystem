@@ -1,4 +1,4 @@
-var app =  angular.module('myApp',['ngRoute','ngCookies','angularUtils.directives.dirPagination','ngProgress']);
+var app =  angular.module('myApp',['ngRoute','ngCookies','angularUtils.directives.dirPagination','ngProgress','angularCSS','ui.bootstrap']);
 
 app.config(function($routeProvider) {
 
@@ -34,7 +34,8 @@ app.config(function($routeProvider) {
   }).
   when('/bookdetails',{
        templateUrl : 'templates/bookdetails.html',
-       controller  : 'bookdetailsCtr'
+       controller  : 'bookdetailsCtr',
+       css         : 'libs/rating.css'
         
   }). 
 	otherwise({

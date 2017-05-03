@@ -4,58 +4,53 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 import pickle
+import os
 from classify import tokenize
 import warnings
 warnings.filterwarnings("ignore")
 
+def fullPath():
+	return os.path.split(os.path.realpath(__file__))[0]
+
 def loadMatrix():
-	with open('tfMatrix.pickle', 'rb') as f:
+	with open(fullPath()+'/features/tfMatrix.pickle', 'rb') as f:
 		M=pickle.load(f)			
 	return M
 
 def loadTFvector():
-	with open('tfvect.pickle', 'rb') as f:
+	with open(fullPath()+'/features/tfvect.pickle', 'rb') as f:
 		V=pickle.load(f)			
 	return V
 
 def loadMlnb():
-	with open('clf_Mnlb.pkl', 'rb') as f:
+	with open(fullPath()+'/classifiers/clf_Mnlb.pkl', 'rb') as f:
 		K=pickle.load(f)			
-	return K	
+	return K
+
+def loadGenre():
+	with open(fullPath()+'/features/genre.pickle', 'rb') as f:
+		G=pickle.load(f)
+	return G 		
 
 def readinput():
 	for lines in fileinput.input():
-		jsondata = lines
-	return json.loads(jsondata)	
+		desc = lines
+	return desc	
 
 def main(): 
 	tfvect = loadTFvector()
-	AllTitle = readinput()
-	title_list = []
-	genre_list = []
-	mytitleIndex = 0
-	i = 0
-
-	for x in AllTitle:
-		title_list.append(x['title'])
-		genre_list.append(x['genre'])
-
-	
-	new_data = pd.DataFrame(title_list, columns=["title"])
-	new_data["genre"] = genre_list
-
-	genre = new_data["genre"].unique()
+	desc = readinput()
+		
+	genre = loadGenre()
 	genre_dict = {value:index for index, value in enumerate(genre)}
-	results = new_data["genre"].map(genre_dict)
-	clf = loadMlnb()
 
+	clf = loadMlnb()
 	
-	txt = ["abstract data type plays major role. such as stack,queue"]
+	txt = [desc]
 	vec_text = tfvect.transform(txt).toarray()   # change here 
 	predict_data = clf.predict(vec_text);
-	print (predict_data)
 	predict_index = predict_data[0];
-	print ("Predicted Category is "+list(genre_dict.keys())[list(genre_dict.values()).index(predict_index)])
+	print (list(genre_dict.keys())[list(genre_dict.values()).index(predict_index)])
 
 		
 

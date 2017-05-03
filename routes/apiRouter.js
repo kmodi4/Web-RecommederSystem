@@ -10,56 +10,41 @@ var PythonShell = require('python-shell');
 //mongoose.Promise = global.Promise;
 mongoose.Promise = require('bluebird');
 mongoose.connect('mongodb://127.0.0.1:27017/testdb');
+
 var book = require('../model/schema');
 var regs = require('../model/registration');
 var sell_book = require('../model/sell_books');
 var imgs = require('../model/images');
+var ratings = require('../model/rating');
+var userPreferences = require('../model/userPreferences');
+var implicitRatings = require('../model/implicitRatings');
 
 var router = express.Router();
+
 
 router.get('/getAllBooks',function (req,res) {
       
      sell_book.find({},function(err,bks){
           if (err) throw err;
 
-       //console.log(bks);
        res.json(bks);
        res.end();
      });
-
      
 });
 
-router.get('/getImages',function (req,res) {
-      
-     imgs.find({},function(err,bks){
-          if (err) throw err;
-
-       //console.log(bks);
-       res.json(bks);
-       res.end();
-     });
-
-     
-});
 
 router.post('/getBook',function(req,res){
-       
-       
+              
        var username = req.body[0].username;
        var title    = req.body[0].title;
-
-       //console.log(username+"   "+title);
 
        sell_book.find({"Username":username,"title":title},function(err,bks){
           if (err) throw err;
 
-       //console.log(bks);
        res.json(bks);
        res.end();
      });
-
-
       
 });
 
@@ -81,7 +66,6 @@ router.get('/getUser/:id',function(req,res){
                  result.Phoneno  = rest.Phoneno;
 
              }
-             console.log(result);
              res.json(result);
              res.end();
         });
@@ -117,11 +101,209 @@ router.put('/updateBook',function(req,res){
 
 });
 
+router.put('/updateRating',function(req,res){
+          var username = req.body.username;
+          var title    = req.body.title;
+          var rating= req.body.rating;
+          var search = {"Username":username,
+                        "title":title}
+          var result = {};              
+        sell_book.update(search,{$set:{"rating":rating}},function(err,bks){
+             if(err) {
+                result.msg = "Update Failed!!!"; 
+                result.success = false;
+             }
+             else{ 
+             result.msg = "Rating Updated"; 
+             result.success = true;
+            }
+             res.json(result);
+             res.end();
+        });
+
+});
+
+router.post('/rateBook',function(req,res){
+            
+           var userRating = new ratings(req.body);
+           var result = {}; 
+           var search = {"user_id":req.body.user_id,"b_id":req.body.b_id};
+           ratings.update(search,{$set:req.body},{upsert:true},function(err){
+                 if(err){
+                    result.msg = "Unable to rate book";
+                    result.success = false;
+                 }
+                 else{
+                    result.msg = "Rated Succesfully";
+                    result.success = true;
+
+                    regs.findOneAndUpdate({"user_id":req.body.user_id},{$pull:{rated:{"b_id":req.body.b_id}}},function(err,op){
+                        regs.findOneAndUpdate({"user_id":req.body.user_id},{$push:{rated:{"b_id":req.body.b_id,"rating":req.body.rating}}},{new: true},function(err,op){
+                          console.log(op.rated);
+                          res.json(result);
+                          res.end();
+                        });
+                    });
+                 }
+           });
+
+           
+            
+});
+
+router.put('/getRating',function(req,res){
+  var search = {"Username":req.body.Username,"rated.b_id":req.body.b_id};
+     regs.findOne(search,{_id:0,'rated.$':1},function(err,result){
+           if(err){
+            throw err;
+           }
+           res.json(result);
+           res.end();
+     });
+});
+
+
+router.post('/implicitRatings',function(req,res){
+      var search = {"user_id":req.body.user_id,"b_id":req.body.b_id};
+        //console.log(search);
+        implicitRatings.findOneAndUpdate(search,{$set:search,$inc:{"counts":1}},{upsert:true},function(err,result){
+              if(err)
+                throw err
+              //console.log(result);
+              res.json(result);
+              res.end();
+        });
+});
+
+router.put('/matrixFactorization',function(req,res){
+  
+         regs.find().distinct('user_id',function(error,users){
+              sell_book.find().distinct('book_id',function(err,books){
+                  implicitRatings.find({},function(e,ratings){
+                        var data= {"users":users,"books":books,"ratings":ratings,"target":req.body.user_id};
+                        console.log('Start implicit_mf service...');
+                        var pyshell = new PythonShell('./python/implicit_mf.py');
+             
+                        pyshell.send(JSON.stringify(data));
+                        pyshell.on('message', function (message) {
+                            topN = JSON.parse(message);
+                            console.log(topN);
+                             findTopN_CF(topN,function(result){
+                                 jdata = {"topN":result};
+                                  res.json(jdata);
+                                  res.end();
+                             });
+                                                
+                        });
+
+                        // end the input stream and allow the process to exit
+                        pyshell.end(function (err) {
+                            if (err){
+                                throw err;
+                            };
+                            console.log('Finished MF');
+                        });
+                        
+                  });
+              });
+         });
+});
+
+router.put('/test_mf',function(req,res){
+  
+         regs.find().distinct('user_id',function(error,users){
+              sell_book.find().distinct('book_id',function(err,books){
+                  implicitRatings.find({},function(e,ratings){
+                        var data= {"users":users,"books":books,"ratings":ratings,"target":req.body.user_id};
+                        console.log('Start implicit_mf service...');
+                        var pyshell = new PythonShell('./python/implicit_mf.py');
+             
+                        pyshell.send(JSON.stringify(data));
+                        pyshell.on('message', function (message) {
+                            console.log(message);
+                             
+                             });
+                                                
+
+                        // end the input stream and allow the process to exit
+                        pyshell.end(function (err) {
+                            if (err){
+                                throw err;
+                            };
+                            console.log('Finished');
+                        });
+                        res.end("done");
+
+                        });
+                        
+                  });
+              });
+});
+
+
+function findTopN_CF(topN,callback){
+        
+      var numRunningQueries = 0;
+      var result = [];
+      
+         (function next(index){           //recursion to maintain Order in asyncrnous Calls
+              if(index==topN.length){
+                callback(result);
+                return;
+              }
+             
+              var search  = {"book_id":topN[index]};
+               
+              sell_book.findOne(search,function(err,bks){
+                     
+                     result.push(bks);
+                     next(index+1);
+                     
+              });
+
+         })(0);
+};
+
+router.get('/ALS_thread',function(req,res){
+         regs.find().distinct('user_id',function(error,users){
+              sell_book.find().distinct('book_id',function(err,books){
+                  implicitRatings.find({},function(e,ratings){
+                        var data= {"users":users,"books":books,"ratings":ratings,"target":2001};
+                        console.log('Start implicit_mf service...');
+                        var pyshell = new PythonShell('./python/implicit_thread_mf.py');
+             
+                        pyshell.send(JSON.stringify(data));
+                        pyshell.on('message', function (message) {
+                            //topN = JSON.parse(message);
+                            console.log(message);
+                              //res.json(topN);
+                              res.end("done");
+                                                
+                        });
+
+                        // end the input stream and allow the process to exit
+                        pyshell.end(function (err) {
+                            if (err){
+                                throw err;
+                            };
+                            console.log('Finished ALS');
+                        });
+                  });
+              });
+         });
+});
+
+router.post('/getUserID',function(req,res){
+        var newuser = new regs(req.body); 
+        newuser.save(function(err,result){
+               res.json(result);
+               res.end();
+        });
+});
+
+
 router.put('/deletebook',function(req,res){
-      console.log(req);
-      /*var username = req.params.user_id;
-      var title = username.substr(username.indexOf("_")+1);
-      username =  username.substr(0,username.indexOf("_"));*/
+      
       var search = {"Username":req.body.username,"title":req.body.title};
       var result = {};
       console.log(search);
@@ -151,7 +333,7 @@ router.post('/register',function(req,res){
           
         newuser.save(function(err){
             if(err) {
-              result.msg = "Registertion Failed";
+              result.msg = "try with different UserName";
               result.success = false;
             }
             else{
@@ -183,6 +365,7 @@ router.post('/authenticate',function(req,res){
                      result.Name = rest.Name;
                      result.EmailId = rest.EmailID;
                      result.Phoneno = rest.Phoneno;
+                     result.user_id = rest.user_id;
                      result.success = true;
                      result.msg = "Authenticated Successfully";
                       console.log(result);
@@ -206,87 +389,131 @@ router.post('/authenticate',function(req,res){
                        
 });
 
-router.get('/move',function(req,res){
-      imgs.find({},function(err,images){
-           
-        for(var i=0;i<images.length;i++){
-          var search  = {"Username":images[i].Username,"title":images[i].title};
-          sell_book.update(search,{$set:{"imgUrl":images[i].imgUrl}},function(err,bks){
-                  
-          });
-        }
-           
-            res.send("done");
-            res.end();
-      });
-       
-});
+
 
 router.post('/topN',function(req,res){
-    
-        //var name = req.body[0].username;
-        //var pass = req.body[0].isbn;
+
         var title = req.body[0].title;
-        sell_book.find({},{_id:0,title:1},function(err,bks){
-          if (err) throw err;
-          var data = {};
-          var topN = [];
-         data.Alltitles = bks;
-         data.Mytitle   = title;
-        console.log("starting python service...");   
-     
-       var pyshell = new PythonShell('./python/topN.py');
-       //var result = [{"name":"karan"},{"name":"jay"},{"name":"ramesh"}];
-       pyshell.send(JSON.stringify(data));
-       pyshell.on('message', function (message) {
-            topN = JSON.parse(message);
-            //console.log(topN); 
-            var resultItems = [];
-            var numRunningQueries = 0
-           for(var i=0;i<topN.length;i++){
-                ++numRunningQueries;
-               var search = {"title":topN[i]};
+        var found = false;
+        sell_book.findOne({"title":title},function(err,bks){
+          
+             if("topn" in bks && bks.topn.length>0){
+               found = true;
+               findTopN(title,found,bks.topn,function(result){
+                       res.json(result);
+                        res.end();
+                        return;
+                  });              
+             }
 
-               sell_book.findOne(search,function(err,topbooks){
-                        --numRunningQueries;
-                        resultItems.push(topbooks);
-                        //console.log(resultItems)
-                        if(numRunningQueries==0){
-                          res.json(resultItems)
-                          res.end(); 
-                        }
-               });
-               
-            }
-               
-            });
+            if(!found){ 
 
+              sell_book.find({},{_id:0,title:1},function(err,bks){
+                if (err) throw err;
+                var data = {};
+                var topN = [];
+                data.Alltitles = bks;
+                data.Mytitle   = title;
+                console.log("starting python service...");   
+           
+                var pyshell = new PythonShell('./python/topN.py');
+             
+                pyshell.send(JSON.stringify(data));
+                pyshell.on('message', function (message) {
+                    topN = JSON.parse(message);
+                    if(topN.length>1){
+                      findTopN(title,found,topN,function(result){
+                           res.json(result);
+                            res.end();
+                      });
+                    }
+                    else{
+                      sell_book.findOne({"title":title},{_id:0,genre:1},function(err,book){
+                          
+                            sell_book.find({"genre":book.genre},function(err,similar){
+                              for(var i=0;i<similar.length;i++){
+                                
+                                  topN.push(similar[i].title)
+                              }
+                              if(topN.indexOf(title)!=-1){
+                                topN.pop(topN.indexOf(title))
+                              }
+                              found = false;
+                              
+                               findTopN(title,found,topN,function(result){
+                                     res.json(result);
+                                      res.end();
+                                }); 
+                            });
+                      });
+                      console.log("genre TopN");
+                    }                     
+                });
 
-      // end the input stream and allow the process to exit
-      pyshell.end(function (err) {
-          if (err){
-              throw err;
-          };
-          console.log('Finished');
-      });
+                // end the input stream and allow the process to exit
+                pyshell.end(function (err) {
+                    if (err){
+                        throw err;
+                    };
+                    console.log('Finished TopN');
+                });
+            
+              });
 
-       //res.json(bks);
+          }   //if ends
+
+    });
+
        
-     });
      
 });
 
-router.get('/knn',function(req,res){
-      sell_book.find({},{_id:0,title:1,genre:1},function(err,bks){
-          if (err) throw err;
+function findTopN(title,found,topN,callback){
+
+      var numRunningQueries = 0;
+      var result = [];
+      
+         (function next(index){           //recursion to maintain Order in asyncrnous Calls
+              if(index==topN.length){
+                if(!found){
+                                  sell_book.update({"title":title},{"$set":{"topn":topN}},{multi: true},function(err,r){
+                                        console.log("TopN Edited...");
+                                        console.log("TopN length:"+topN.length);
+                                        callback(result);
+                                        
+                                  });
+                            }
+                else{                  
+                  callback(result);
+                } 
+                return;
+              }
+             
+              var search = {"title":topN[index]};
+               
+              sell_book.findOne(search,function(err,bks){
+                     
+                     result.push(bks);
+                     next(index+1);
+                     
+              });
+
+         })(0);
+
+
+};
+
+function knn(desc,callback){
+       
        console.log("starting python KNN Classifier...");   
      
        var pyshell = new PythonShell('./python/knn.py');
-       //var result = [{"name":"karan"},{"name":"jay"},{"name":"ramesh"}];
-       pyshell.send(JSON.stringify(bks));
+       
+       pyshell.send(desc);
        pyshell.on('message', function (message) {
+            callback(message);
             console.log(message);
-         
+
         });
 
       // end the input stream and allow the process to exit
@@ -294,27 +521,31 @@ router.get('/knn',function(req,res){
           if (err){
               throw err;
           };
-
-          console.log('Finished');
+          console.log('Finished KNN');
       });
-      res.json(bks)
-      res.end();
+               
+        
+};
 
-       
-     });
+router.get('/knn',function(req,res){
+     var str = "abstract data type plays major role. such as stack,queue";
+      knn(str,function(result){
+            res.send(result);
+            res.end();
+      });
 });
 
 router.get('/mlnb',function(req,res){
-      sell_book.find({},{_id:0,title:1,genre:1},function(err,bks){
-          if (err) throw err;
+      
        console.log("starting python MLNB Classifier...");   
      
        var pyshell = new PythonShell('./python/mlnb.py');
-       //var result = [{"name":"karan"},{"name":"jay"},{"name":"ramesh"}];
-       pyshell.send(JSON.stringify(bks));
+       var str = "abstract data type plays major role. such as stack,queue";
+       pyshell.send(str);
        pyshell.on('message', function (message) {
             console.log(message);
-         
+            res.send(message)
+            res.end();
         });
 
       // end the input stream and allow the process to exit
@@ -323,42 +554,115 @@ router.get('/mlnb',function(req,res){
               throw err;
           };
 
-          console.log('Finished');
+          console.log('Finished MLNB');
       });
-      res.json(bks)
-      res.end();
-
-       
-     });
+      
 });
 
-router.get('/classify',function(req,res){
-      sell_book.find({},{_id:0,title:1,desc:1,genre:1},function(err,bks){
+function classify(callback){
+        sell_book.find({},{_id:0,title:1,book_id:1,desc:1,genre:1},function(err,bks){
           if (err) throw err;
        console.log("starting python service...");   
      
        var pyshell = new PythonShell('./python/classify.py');
-       //var result = [{"name":"karan"},{"name":"jay"},{"name":"ramesh"}];
+       
        pyshell.send(JSON.stringify(bks));
        pyshell.on('message', function (message) {
-            console.log(message);
-         
+            console.log(message);  
+             callback(message);      
         });
 
-      // end the input stream and allow the process to exit
-      pyshell.end(function (err) {
-          if (err){
-              throw err;
-          };
+        // end the input stream and allow the process to exit
+        pyshell.end(function (err) {
+            if (err){
+                throw err;
+            };
 
-          console.log('Finished');
-      });
-      res.json(bks)
-      res.end();
-
+            console.log('Finished classify');
+        });
+        sell_book.update({},{$unset:{topn:1}},{multi:true},function(err,op){
+              console.log("Removed All Topn")
+        });
+      
        
-     });
+    });
+}; 
 
+router.get('/classify',function(req,res){
+        
+    classify(function(result){
+         res.send(result);
+         res.end();
+    });
+
+});
+
+router.post('/userPreference',function(req,res){
+        var search = {"user_id":req.body.user_id,"prefer.genre":req.body.genre};
+        console.log(search);
+        userPreferences.findOneAndUpdate(search,{$inc:{"prefer.$.rating":0.1}},{new:true},function(err,result){
+              console.log(result);
+              res.json(result);
+              res.end();
+        });
+});
+
+router.get('/preferences',function(req,res){
+     sell_book.aggregate([{"$group":{"_id":"$genre"}}],function(er,data){
+      prefer = [];
+      for(var i=0;i<data.length;i++){
+           var p = {"genre":data[i]._id,"rating":0};
+           prefer.push(p);
+      }
+        regs.find({},{_id:0,user_id:1},function(err,bks){
+            var running = 0;
+              for(var i=0;i<bks.length;i++){
+                var data = {"user_id":bks[i].user_id,"prefer":prefer};
+                var  newuserPreferences = new userPreferences(data);
+                running++;
+                newuserPreferences.save(function(error){
+                     if(error)
+                      throw error;
+                    running--;
+                    if(running==0){
+                       res.send("Done");
+                       res.end();
+                    }
+                });
+              } 
+        });
+
+      });  
+});
+
+router.get('/utility_matrix',function(req,res){
+       var data = {}
+       regs.find({},{_id:0,user_id:1},function(err,users){
+            sell_book.find({},{_id:0,book_id:1},function(er,books){
+              ratings.find({},{_id:0,user_id:1,b_id:1,rating:1},function(e,ratings){
+
+                  data = {"users":users,"books":books,"ratings":ratings}
+                  console.log("starting python service...");   
+     
+                   var pyshell = new PythonShell('./python/utility_matrix.py');
+                   pyshell.send(JSON.stringify(data));
+
+                   pyshell.on('message', function (message) {
+                        console.log(message);                 
+                    });
+
+                    // end the input stream and allow the process to exit
+                    pyshell.end(function (err) {
+                        if (err){
+                            throw err;
+                        };
+                        console.log('Finished ui_matrix');
+                    });
+                    res.send("Done");
+                    res.end();
+                });    
+            });
+       });
 });
 
 router.put('/recentBooks',function(req,res){
@@ -374,9 +678,7 @@ router.put('/recentBooks',function(req,res){
               var title = req.body[index].title;
               var username = req.body[index].username;
               var search  = {"title":title,"Username":username};
-              console.log(search);
-              
-              
+               
               sell_book.findOne(search,function(err,bks){
                      
                      result.push(bks);
@@ -385,6 +687,43 @@ router.put('/recentBooks',function(req,res){
               });
 
          })(0);
+});
+
+router.get('/adduserID',function(req,res){
+      var numRunningQueries = 0;
+      var result = [];
+
+      sell_book.find({},function(err,bks){
+
+        regs.find({},function(err,users){
+              (function next(index){           //recursion to maintain Order in asyncrnous Calls
+              if(index==bks.length){
+                res.end("done");
+                console.log("done");
+                return;
+              }
+              var title = bks[index].title;
+              var username = bks[index].Username;
+              var u_id = 2000;
+              for(var i=0;i<users.length;i++){
+
+                 if(username==users[i].Username){
+                     u_id = users[i].user_id;
+                     
+                     break;
+                 }
+              }
+              var search  = {"title":title,"Username":username};
+
+              sell_book.findOneAndUpdate(search,{$set:{user_id:u_id}},function(err,bks){
+                     next(index+1);                    
+              });
+
+         })(0);  
+        });
+                     
+      });
+         
 });
 
 router.get('/',function (req,res) {
@@ -399,7 +738,6 @@ router.get('/update',function (req,res) {
 
 router.post('/addBook',function(req,res){
     
-     //console.log(req.body);
      var msg = "Added Succesfully";
 
       var dir     = "./public/images/";
@@ -436,7 +774,7 @@ router.post('/addBook',function(req,res){
           fs.writeFile(dir+imgname, buff, function(err) {
                if(err) 
                   throw err;
-                //console.log(err);
+                
               });
         }
 
@@ -451,22 +789,46 @@ router.post('/addBook',function(req,res){
         if ( err ){
             result.message = "Book Upload failed";
           result.success = 0;
+          res.json(result); 
+               res.end();
         }
         else{
           console.log("Book Saved Successfully");
           result.message = "Book Uploaded Successfully";
           result.success = 1;
-       }
+
+          newImg.save(function(err){
+            if ( err ) throw err;
+            console.log("img Saved Successfully");
+               
+               res.json(result); 
+               res.end();
+
+          });
+
+          classify(function(opt){ 
+            
+            knn(req.body.desc,function(op){
+              op = op.replace(/[\n\r]+/g, '');
+              var search = {"Username":req.body.Username,"title":req.body.title};
+              sell_book.update(search,{$set:{"genre":op}},function(err,modify){
+                  console.log("Genre updated");
+              });
+
+            });
+
+          });
+
+         
+
+
+        }
+
       });
 
-      newImg.save(function(err){
-        if ( err ) throw err;
-        console.log("img Saved Successfully");
-      });
+      
 
      
-     res.json(result); 
-     res.end();
 });
 
 router.post('/addUser',function(req,res){
