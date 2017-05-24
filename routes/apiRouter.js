@@ -1,5 +1,5 @@
 /**
- * Created by KARAN on 13-08-2016. 
+ * Created by KARAN on 13-01-2017. 
  */
 var express = require('express');
 var mongoose = require('mongoose');
@@ -10,6 +10,8 @@ var PythonShell = require('python-shell');
 //mongoose.Promise = global.Promise;
 mongoose.Promise = require('bluebird');
 mongoose.connect('mongodb://127.0.0.1:27017/testdb');
+var gcm = require('node-gcm');
+var API_KEY = "AIzaSyCmO5nc33R7fw7p3iZzomWRKBJwAGlQu0g";
 
 var book = require('../model/schema');
 var regs = require('../model/registration');
@@ -18,9 +20,12 @@ var imgs = require('../model/images');
 var ratings = require('../model/rating');
 var userPreferences = require('../model/userPreferences');
 var implicitRatings = require('../model/implicitRatings');
+var chatgcm = require('../model/chatgcm');
 
 var router = express.Router();
 
+// Set up the sender with your GCM/FCM API key (declare this once for multiple messages) 
+var sender = new gcm.Sender(API_KEY);
 
 router.get('/getAllBooks',function (req,res) {
       
@@ -216,7 +221,7 @@ router.put('/test_mf',function(req,res){
                   implicitRatings.find({},function(e,ratings){
                         var data= {"users":users,"books":books,"ratings":ratings,"target":req.body.user_id};
                         console.log('Start implicit_mf service...');
-                        var pyshell = new PythonShell('./python/implicit_mf.py');
+                        var pyshell = new PythonShell('./python/Test_MF.py');
              
                         pyshell.send(JSON.stringify(data));
                         pyshell.on('message', function (message) {
@@ -264,20 +269,23 @@ function findTopN_CF(topN,callback){
          })(0);
 };
 
-router.get('/ALS_thread',function(req,res){
+router.put('/ALS_thread',function(req,res){
          regs.find().distinct('user_id',function(error,users){
               sell_book.find().distinct('book_id',function(err,books){
                   implicitRatings.find({},function(e,ratings){
-                        var data= {"users":users,"books":books,"ratings":ratings,"target":2001};
+                        var data= {"users":users,"books":books,"ratings":ratings,"target":req.body.user_id};
                         console.log('Start implicit_mf service...');
                         var pyshell = new PythonShell('./python/implicit_thread_mf.py');
              
                         pyshell.send(JSON.stringify(data));
                         pyshell.on('message', function (message) {
-                            //topN = JSON.parse(message);
-                            console.log(message);
-                              //res.json(topN);
-                              res.end("done");
+                            topN = JSON.parse(message);
+                            console.log(topN);
+                             findTopN_CF(topN,function(result){
+                                 jdata = {"topN":result};
+                                  res.json(jdata);
+                                  res.end();
+                             }); 
                                                 
                         });
 
@@ -294,10 +302,21 @@ router.get('/ALS_thread',function(req,res){
 });
 
 router.post('/getUserID',function(req,res){
+        
         var newuser = new regs(req.body); 
         newuser.save(function(err,result){
-               res.json(result);
-               res.end();
+               
+               if(!err){
+                res.json(result);
+                res.end();
+               }
+               else{
+                regs.findOne(req.body,function(er,call){
+                  
+                    res.json(call);
+                    res.end();
+                });
+               }
         });
 });
 
@@ -831,18 +850,55 @@ router.post('/addBook',function(req,res){
      
 });
 
-router.post('/addUser',function(req,res){
+
+router.post('/registerGcm',function(req,res){
      
      console.log(req.body);
-     var msg = "";
-        var newbook = book({
-          title: req.body.title,
-          genre: req.body.genre,
-          publisher: req.body.publisher
+     var result = {};
+        
+     var newuser = new chatgcm(req.body); 
+        newuser.save(function(err){
+               
+               result.message = "Registered Successfully";
+               res.json(result);
+               res.end();
+                
         });
+});
+
+router.put('/Chatgcm',function(req,res){
      
-     res.send(msg);
-     res.end();
+     console.log(req.body);
+     var result = {};
+
+     // Prepare a message to be sent 
+      var message = new gcm.Message({
+          data: { message: req.body.msg }
+      });
+       
+      // Specify which registration IDs to deliver the message to 
+      chatgcm.findOne({"Username":req.body.Username},function(err,user){
+
+        if(user){
+           var regTokens = [user.reg_id];
+       
+          // Actually send the message 
+          sender.send(message, { registrationTokens: regTokens }, function (err, response) {
+              if (err) console.error(err);
+              else console.log(response);
+              res.json(response);
+              res.end();
+          });
+        }
+        else{
+          result.success = 0;
+          res.json(result);
+          res.end();
+        }
+      });
+     
+        
+  
 });
 
 module.exports = router;

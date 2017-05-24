@@ -3,8 +3,8 @@ var Schema = mongoose.Schema;
 
 // create a schema
 var chatgcmSchema = new Schema({
-  Username: Number,
-  reg_id: { type: Number}
+  Username:String,
+  reg_id: { type: String}
   
 });
 

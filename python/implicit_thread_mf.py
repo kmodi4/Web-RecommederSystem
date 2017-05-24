@@ -40,14 +40,21 @@ def main():
 	#print(counts.tocsr())
 
 	# initialize a model
-	model = implicit.als.AlternatingLeastSquares(factors=3)
+	model = implicit.als.AlternatingLeastSquares(factors=8)
 
 	# train the model on a sparse matrix of item/user/confidence weights
 	model.fit(counts)
 
 	# recommend items for a user
-	#recommendations = model.recommend(target_id, counts.T)
-	#print (recommendations)
+	result = []
+	recommendations = model.recommend(target_id, counts.T)
+	for i,x in enumerate(recommendations):
+		result.append(book_list[x[0]])
+	print (result)
+
+	# find related items
+	#related = model.similar_items(item_id)
+	#print (related)
 
 # Start process
 if __name__ == '__main__':

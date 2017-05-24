@@ -53,7 +53,7 @@ def main():
 	for x in ratings:
 		df.set_value(x['user_id'],x['b_id'],x['counts'])
 	
-	df.to_csv('implicit_rating.csv')
+	#df.to_csv('implicit_rating.csv')
 
 	Q = df.values
 
